@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/* Gym palette: concrete floor, ink, steel, and bumper-plate colors for each split day */
+@theme inline {
+  --color-concrete: #E6E8EB;
+  --color-panel: #F5F6F7;
+  --color-ink: #1C2230;
+  --color-steel: #5B6474;
+  --color-line: #CDD2D9;
+  --color-good: #2E8B57;
+  --font-sans: var(--font-barlow), system-ui, sans-serif;
+  --font-cond: var(--font-barlow-cond), var(--font-barlow), sans-serif;
+}
+
+html {
+  background: var(--color-concrete);
+}
+
+body {
+  background: var(--color-concrete);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Big numbers line up like a scoreboard */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hide the little arrows on number boxes; we use our own buttons */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+:focus-visible {
+  outline: 3px solid #1F5FBF;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
