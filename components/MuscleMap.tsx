@@ -29,8 +29,6 @@ const ell = (cx: number, cy: number, rx: number, ry: number) =>
 const SILHOUETTE = [
   ell(60, 18, 12, 14),        // head
   r(53, 30, 14, 10, 3),       // neck
-  r(16, 96, 13, 42, 6),       // left forearm
-  r(91, 96, 13, 42, 6),       // right forearm
   r(41, 118, 38, 16, 6),      // hips
   r(43, 196, 14, 8, 4),       // knees
   r(63, 196, 14, 8, 4),
@@ -43,6 +41,8 @@ const FRONT: Shape[] = [
   { muscle: "Chest", d: r(61, 41, 20, 28, 7) },
   { muscle: "Biceps", d: r(19, 60, 13, 34, 6) },
   { muscle: "Biceps", d: r(88, 60, 13, 34, 6) },
+  { muscle: "Forearms", d: r(16, 96, 13, 42, 6) },
+  { muscle: "Forearms", d: r(91, 96, 13, 42, 6) },
   { muscle: "Core", d: r(44, 71, 32, 46, 8) },
   { muscle: "Quads", d: r(41, 136, 18, 58, 8) },
   { muscle: "Quads", d: r(61, 136, 18, 58, 8) },
@@ -56,6 +56,8 @@ const BACK: Shape[] = [
   { muscle: "Back", d: "M42,41 h36 l4,30 l-6,46 h-32 l-6,-46 z" },
   { muscle: "Triceps", d: r(19, 60, 13, 34, 6) },
   { muscle: "Triceps", d: r(88, 60, 13, 34, 6) },
+  { muscle: "Forearms", d: r(16, 96, 13, 42, 6) },
+  { muscle: "Forearms", d: r(91, 96, 13, 42, 6) },
   { muscle: "Glutes", d: r(41, 118, 18, 24, 9) },
   { muscle: "Glutes", d: r(61, 118, 18, 24, 9) },
   { muscle: "Hamstrings", d: r(41, 144, 18, 50, 8) },

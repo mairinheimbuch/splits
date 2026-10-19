@@ -2,9 +2,9 @@
 
 export type Muscle =
   | "Chest" | "Back" | "Shoulders" | "Biceps" | "Triceps"
-  | "Quads" | "Hamstrings" | "Glutes" | "Calves" | "Core";
+  | "Quads" | "Hamstrings" | "Glutes" | "Calves" | "Core" | "Forearms";
 
-export const MUSCLES: Muscle[] = ["Chest", "Back", "Shoulders", "Biceps", "Triceps", "Quads", "Hamstrings", "Glutes", "Calves", "Core"];
+export const MUSCLES: Muscle[] = ["Chest", "Back", "Shoulders", "Biceps", "Triceps", "Quads", "Hamstrings", "Glutes", "Calves", "Core", "Forearms"];
 
 export type Exercise = {
   name: string;
@@ -29,12 +29,12 @@ const LIST: Exercise[] = [
   ex("Triceps Pushdown", "Triceps", 3, 10, 15, 5, 60),
   ex("Overhead Triceps Extension", "Triceps", 2, 10, 15, 5, 60),
   // Pull
-  ex("Barbell Row", "Back", 4, 6, 10, 5, 120, ["Biceps"]),
+  ex("Barbell Row", "Back", 4, 6, 10, 5, 120, ["Biceps", "Forearms"]),
   ex("Lat Pulldown", "Back", 3, 8, 12, 5, 90, ["Biceps"]),
   ex("Seated Cable Row", "Back", 3, 8, 12, 5, 90, ["Biceps"]),
   ex("Face Pull", "Shoulders", 3, 12, 15, 5, 60, ["Back"]),
   ex("Barbell Curl", "Biceps", 3, 8, 12, 5, 60),
-  ex("Hammer Curl", "Biceps", 2, 10, 12, 5, 60),
+  ex("Hammer Curl", "Biceps", 2, 10, 12, 5, 60, ["Forearms"]),
   // Legs
   ex("Back Squat", "Quads", 4, 5, 8, 5, 180, ["Glutes"]),
   ex("Romanian Deadlift", "Hamstrings", 3, 8, 10, 5, 120, ["Glutes", "Back"]),
@@ -44,13 +44,13 @@ const LIST: Exercise[] = [
   ex("Standing Calf Raise", "Calves", 3, 10, 15, 5, 60),
   // Upper
   ex("Dumbbell Bench Press", "Chest", 3, 8, 12, 5, 90, ["Triceps", "Shoulders"]),
-  ex("Pull-Up", "Back", 3, 6, 10, 0, 120, ["Biceps"]),
+  ex("Pull-Up", "Back", 3, 6, 10, 0, 120, ["Biceps", "Forearms"]),
   ex("Seated Dumbbell Shoulder Press", "Shoulders", 3, 8, 12, 5, 90, ["Triceps"]),
   ex("Chest-Supported Row", "Back", 3, 8, 12, 5, 90, ["Biceps"]),
   ex("EZ-Bar Curl", "Biceps", 2, 10, 12, 5, 60),
   ex("Skull Crusher", "Triceps", 2, 10, 12, 5, 60),
   // Lower
-  ex("Deadlift", "Hamstrings", 3, 3, 5, 10, 180, ["Glutes", "Back"]),
+  ex("Deadlift", "Hamstrings", 3, 3, 5, 10, 180, ["Glutes", "Back", "Forearms"]),
   ex("Bulgarian Split Squat", "Quads", 3, 8, 12, 5, 90, ["Glutes"]),
   ex("Leg Extension", "Quads", 3, 12, 15, 5, 60),
   ex("Seated Leg Curl", "Hamstrings", 3, 10, 15, 5, 60),
@@ -59,13 +59,16 @@ const LIST: Exercise[] = [
   // Extras you can add to any day
   ex("Cable Fly", "Chest", 3, 12, 15, 5, 60),
   ex("Push-Up", "Chest", 3, 10, 20, 0, 60, ["Triceps"]),
-  ex("Single-Arm Dumbbell Row", "Back", 3, 8, 12, 5, 60, ["Biceps"]),
+  ex("Single-Arm Dumbbell Row", "Back", 3, 8, 12, 5, 60, ["Biceps", "Forearms"]),
   ex("Rear Delt Fly", "Shoulders", 3, 12, 15, 2.5, 60),
   ex("Dips", "Triceps", 3, 8, 12, 0, 90, ["Chest"]),
   ex("Goblet Squat", "Quads", 3, 10, 15, 5, 90, ["Glutes"]),
   ex("Walking Lunge", "Quads", 3, 10, 12, 5, 90, ["Glutes"]),
   ex("Cable Crunch", "Core", 3, 12, 15, 5, 60),
   ex("Plank (seconds)", "Core", 3, 30, 60, 0, 60),
+  ex("Wrist Curl", "Forearms", 3, 12, 20, 2.5, 45),
+  ex("Reverse Curl", "Forearms", 3, 10, 15, 5, 60, ["Biceps"]),
+  ex("Farmer's Carry (seconds)", "Forearms", 3, 30, 60, 10, 90, ["Core"]),
 ];
 
 export const EXERCISES: Record<string, Exercise> = Object.fromEntries(LIST.map((e) => [e.name, e]));
@@ -90,7 +93,7 @@ export const DAYS: Record<string, Day> = {
   Chest: { name: "Chest", ...RED, exercises: ["Bench Press", "Incline Dumbbell Press", "Cable Fly", "Dips", "Push-Up"] },
   Back: { name: "Back", ...BLUE, exercises: ["Deadlift", "Pull-Up", "Barbell Row", "Lat Pulldown", "Single-Arm Dumbbell Row"] },
   Shoulders: { name: "Shoulders", ...PURPLE, exercises: ["Overhead Press", "Seated Dumbbell Shoulder Press", "Lateral Raise", "Rear Delt Fly", "Face Pull"] },
-  Arms: { name: "Arms", ...GREEN, exercises: ["Barbell Curl", "Skull Crusher", "Hammer Curl", "Triceps Pushdown", "EZ-Bar Curl", "Overhead Triceps Extension"] },
+  Arms: { name: "Arms", ...GREEN, exercises: ["Barbell Curl", "Skull Crusher", "Hammer Curl", "Triceps Pushdown", "EZ-Bar Curl", "Overhead Triceps Extension", "Wrist Curl"] },
   "Full Body A": { name: "Full Body A", ...RED, exercises: ["Back Squat", "Bench Press", "Barbell Row", "Romanian Deadlift", "Lateral Raise", "Hanging Leg Raise"] },
   "Full Body B": { name: "Full Body B", ...BLUE, exercises: ["Deadlift", "Overhead Press", "Pull-Up", "Bulgarian Split Squat", "Barbell Curl", "Cable Crunch"] },
 };
