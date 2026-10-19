@@ -267,7 +267,7 @@ export default function Workout() {
                 {[5, 6, 7, 8, 9].map((h) => (
                   <button key={h} type="button" onClick={() => setSleep(h)} aria-pressed={sleep === h}
                     className={"rounded-xl py-2 font-bold border-2 tabular " + (sleep === h ? "bg-ink text-white border-ink" : "border-line")}>
-                    {h === 5 ? "≤5" : h === 9 ? "9+" : h}h
+                    {h === 5 ? "≤5h" : h === 9 ? "9h+" : `${h}h`}
                   </button>
                 ))}
               </div>
