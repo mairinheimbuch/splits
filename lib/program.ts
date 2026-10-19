@@ -116,6 +116,12 @@ export function getDay(name: string) {
   return DAYS[name] ?? { name, ...BLACK, exercises: [] };
 }
 
+// The exercises for a day: yours if you've edited it, otherwise the default
+export function dayList(name: string, custom?: Record<string, string[]> | null) {
+  const mine = custom?.[name]?.filter((n) => EXERCISES[n]);
+  return mine && mine.length ? mine : getDay(name).exercises;
+}
+
 // The day after the last one you finished, in your split's order
 export function nextDay(split: Split, lastDayName: string | null) {
   if (!lastDayName) return split.days[0];

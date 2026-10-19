@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { supabase, getSettings } from "@/lib/supabase";
 import { useUser } from "@/lib/useUser";
-import { getDay, EXERCISES, ALL_EXERCISES, type Exercise } from "@/lib/program";
+import { getDay, dayList, EXERCISES, ALL_EXERCISES, type Exercise } from "@/lib/program";
 import { e1rm, suggest, fmt, shortDate, type SetRow } from "@/lib/stats";
 import Login from "@/components/Login";
 
@@ -25,9 +25,13 @@ export default function Workout() {
   const [adding, setAdding] = useState(false);
   const [msg, setMsg] = useState("");
   const [summary, setSummary] = useState<Summary | null>(null);
+  // Quick check-in before the first set
+  const [sleep, setSleep] = useState<number | null>(null);
+  const [energy, setEnergy] = useState<number | null>(null);
+  const [checked, setChecked] = useState(false);
   // Rest timer
   const [restEnd, setRestEnd] = useState<number | null>(null);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0); // set when a rest starts
   const buzzed = useRef(false);
 
   useEffect(() => {
@@ -66,7 +70,7 @@ export default function Workout() {
     (async () => {
       const st = await getSettings(user.id);
       setUnit(st.unit);
-      const day = getDay(dayName);
+      const exercises = dayList(dayName, st.custom_days);
       // Pick up where you left off if you started this day in the last 12 hours
       const since = new Date(Date.now() - 12 * 3600 * 1000).toISOString();
       const { data: open } = await supabase.from("workouts").select("*").eq("day_name", dayName)
@@ -79,7 +83,7 @@ export default function Workout() {
         const { data } = await supabase.from("sets").select("*").eq("workout_id", openId);
         doneSets = (data ?? []) as SetRow[];
       }
-      const names = Array.from(new Set([...day.exercises, ...doneSets.map((s) => s.exercise)])).filter((n) => EXERCISES[n]);
+      const names = Array.from(new Set([...exercises, ...doneSets.map((s) => s.exercise)])).filter((n) => EXERCISES[n]);
       const p = await history(names, openId);
       setPast(p);
       setList(names);
@@ -116,7 +120,8 @@ export default function Workout() {
 
   async function ensureWorkout() {
     if (workoutId) return workoutId;
-    const { data, error } = await supabase.from("workouts").insert({ day_name: dayName }).select("id, started_at").single();
+    const { data, error } = await supabase.from("workouts")
+      .insert({ day_name: dayName, sleep_hours: sleep, energy }).select("id, started_at").single();
     if (error || !data) { setMsg("Couldn't start the workout: " + (error?.message ?? "unknown error")); return null; }
     setWorkoutId(data.id);
     setStartedAt(data.started_at);
@@ -250,6 +255,45 @@ export default function Workout() {
       </div>
 
       <div className="px-4 pt-4 flex flex-col gap-5">
+        {!workoutId && !checked && (
+          <section className="rounded-2xl bg-white border-2 p-4 flex flex-col gap-4" style={{ borderColor: day.color }}>
+            <div>
+              <h2 className="font-cond text-2xl font-bold">Quick check-in</h2>
+              <p className="text-sm text-steel">Two taps. After a few weeks, Progress shows how sleep and energy change your lifts.</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold">Sleep last night</p>
+              <div className="grid grid-cols-5 gap-2" role="group" aria-label="Hours of sleep">
+                {[5, 6, 7, 8, 9].map((h) => (
+                  <button key={h} type="button" onClick={() => setSleep(h)} aria-pressed={sleep === h}
+                    className={"rounded-xl py-2 font-bold border-2 tabular " + (sleep === h ? "bg-ink text-white border-ink" : "border-line")}>
+                    {h === 5 ? "≤5" : h === 9 ? "9+" : h}h
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold">Energy right now</p>
+              <div className="grid grid-cols-5 gap-2" role="group" aria-label="Energy from 1 to 5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} type="button" onClick={() => setEnergy(n)} aria-pressed={energy === n}
+                    className={"rounded-xl py-2 font-bold border-2 tabular " + (energy === n ? "bg-ink text-white border-ink" : "border-line")}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between text-xs text-steel"><span>Drained</span><span>Ready to go</span></div>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setChecked(true)} disabled={sleep === null || energy === null}
+                className="flex-1 rounded-xl py-3 font-bold disabled:opacity-40" style={{ background: day.color, color: day.ink }}>
+                Save check-in
+              </button>
+              <button type="button" onClick={() => { setSleep(null); setEnergy(null); setChecked(true); }}
+                className="rounded-xl border border-line px-4 font-semibold">Skip</button>
+            </div>
+          </section>
+        )}
         {list.map((name) => {
           const ex = EXERCISES[name];
           const p = past[name];
@@ -266,7 +310,13 @@ export default function Workout() {
                     Last time ({shortDate(p.date!)}): {p.sets.map((s) => `${fmt(s.weight)}×${s.reps}`).join(", ")}
                   </p>
                 ) : null}
-                <p className="mt-1 text-sm font-semibold rounded-lg px-3 py-2" style={{ background: `${day.color}1A` }}>{tip.note}</p>
+                <div className="mt-1 text-sm rounded-lg px-3 py-2" style={{ background: `${day.color}1A` }}>
+                  <p className="font-semibold">{tip.note}</p>
+                  <details className="mt-1">
+                    <summary className="cursor-pointer font-semibold underline">Why?</summary>
+                    <p className="mt-1">{tip.why}</p>
+                  </details>
+                </div>
               </div>
 
               <div className="px-2 pb-2">

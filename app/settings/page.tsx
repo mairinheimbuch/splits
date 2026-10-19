@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase, getSettings, type Settings } from "@/lib/supabase";
 import { useUser } from "@/lib/useUser";
-import { SPLITS, getDay } from "@/lib/program";
+import { SPLITS, getDay, getSplit, dayList, ALL_EXERCISES, EXERCISES } from "@/lib/program";
 import Login from "@/components/Login";
 import Plate from "@/components/Plate";
 
@@ -11,8 +11,28 @@ export default function MySplit() {
   const { user, loading } = useUser();
   const [s, setS] = useState<Settings | null>(null);
   const [status, setStatus] = useState("");
+  const [editing, setEditing] = useState<string | null>(null);
+  const [adding, setAdding] = useState("");
 
   useEffect(() => { if (user) getSettings(user.id).then(setS); }, [user]);
+
+  // Save your own exercise list for one day (or reset it to the default)
+  async function saveDay(dayName: string, list: string[] | null) {
+    if (!s) return;
+    const custom = { ...(s.custom_days ?? {}) };
+    if (list) custom[dayName] = list; else delete custom[dayName];
+    setS({ ...s, custom_days: custom });
+    const { error } = await supabase.from("settings").update({ custom_days: custom }).eq("user_id", s.user_id);
+    setStatus(error ? "Couldn't save: " + error.message : `${dayName} saved`);
+  }
+
+  function move(list: string[], i: number, dir: -1 | 1) {
+    const j = i + dir;
+    if (j < 0 || j >= list.length) return list;
+    const next = [...list];
+    [next[i], next[j]] = [next[j], next[i]];
+    return next;
+  }
 
   async function save(next: Settings) {
     setS(next);
@@ -67,6 +87,66 @@ export default function MySplit() {
                 })}
               </div>
             </button>
+          );
+        })}
+      </section>
+
+      <section id="days" className="flex flex-col gap-3 scroll-mt-6">
+        <div>
+          <h2 className="font-cond text-3xl font-bold">Your days</h2>
+          <p className="text-steel">Swap in the lifts you actually do. Your history for every lift stays the same.</p>
+        </div>
+        {Array.from(new Set(getSplit(s.split).days)).map((dayName) => {
+          const d = getDay(dayName);
+          const list = dayList(dayName, s.custom_days);
+          const open = editing === dayName;
+          const edited = !!s.custom_days?.[dayName]?.length;
+          return (
+            <div key={dayName} className="rounded-2xl bg-white border border-line overflow-hidden">
+              <button type="button" onClick={() => { setEditing(open ? null : dayName); setAdding(""); }} aria-expanded={open}
+                className="w-full flex items-center gap-3 p-3 text-left">
+                <Plate color={d.color} ink={d.ink} size={32} />
+                <span className="flex-1">
+                  <span className="block font-cond text-2xl font-bold leading-tight">{dayName}</span>
+                  <span className="block text-sm text-steel">{list.length} lifts{edited ? ", edited by you" : ""}</span>
+                </span>
+                <span className="text-steel font-semibold">{open ? "Done" : "Edit"}</span>
+              </button>
+              {open && (
+                <div className="px-3 pb-3 flex flex-col gap-2">
+                  <ul className="flex flex-col divide-y divide-line border-y border-line">
+                    {list.map((name, i) => (
+                      <li key={name} className="flex items-center gap-1 py-2">
+                        <span className="flex-1 font-semibold">{name}<span className="block text-xs font-normal text-steel">{EXERCISES[name].muscle}</span></span>
+                        <button type="button" aria-label={`Move ${name} up`} disabled={i === 0}
+                          onClick={() => saveDay(dayName, move(list, i, -1))} className="w-9 h-9 rounded-lg border border-line disabled:opacity-30">↑</button>
+                        <button type="button" aria-label={`Move ${name} down`} disabled={i === list.length - 1}
+                          onClick={() => saveDay(dayName, move(list, i, 1))} className="w-9 h-9 rounded-lg border border-line disabled:opacity-30">↓</button>
+                        <button type="button" aria-label={`Remove ${name}`} disabled={list.length === 1}
+                          onClick={() => saveDay(dayName, list.filter((x) => x !== name))} className="w-9 h-9 rounded-lg border border-line disabled:opacity-30">✕</button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex gap-2">
+                    <label className="sr-only" htmlFor={`add-${dayName}`}>Add a lift to {dayName}</label>
+                    <select id={`add-${dayName}`} value={adding} onChange={(e) => setAdding(e.target.value)}
+                      className="flex-1 min-w-0 rounded-xl border border-line bg-white px-3 py-2">
+                      <option value="">Add a lift...</option>
+                      {ALL_EXERCISES.filter((n) => !list.includes(n)).map((n) => (
+                        <option key={n} value={n}>{n} ({EXERCISES[n].muscle})</option>
+                      ))}
+                    </select>
+                    <button type="button" disabled={!adding} onClick={() => { saveDay(dayName, [...list, adding]); setAdding(""); }}
+                      className="rounded-xl bg-ink text-white px-4 font-bold disabled:opacity-40">Add</button>
+                  </div>
+                  {edited && (
+                    <button type="button" onClick={() => saveDay(dayName, null)} className="self-start text-sm font-semibold text-steel underline">
+                      Reset {dayName} to the default
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           );
         })}
       </section>

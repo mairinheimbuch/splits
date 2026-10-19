@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase, getSettings, type Settings } from "@/lib/supabase";
 import { useUser } from "@/lib/useUser";
-import { getSplit, getDay, nextDay, EXERCISES } from "@/lib/program";
+import { getSplit, getDay, nextDay, dayList, EXERCISES } from "@/lib/program";
 import { weekStart } from "@/lib/stats";
 import { weekStreak } from "@/lib/insights";
 import Plate from "@/components/Plate";
@@ -69,6 +69,7 @@ export default function Today() {
   const suggested = nextDay(split, last?.day_name ?? null);
   const dayName = pick ?? suggested;
   const day = getDay(dayName);
+  const lifts = dayList(dayName, settings.custom_days);
   const otherDays = Array.from(new Set(split.days)).filter((d) => d !== dayName);
   const doneToday = week.some((w) => new Date(w.finished_at!).toDateString() === new Date().toDateString());
   const today = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
@@ -108,9 +109,12 @@ export default function Today() {
       <div className="px-6 flex flex-col gap-8 pt-6">
         {/* What's in it */}
         <section className="flex flex-col">
-          <h2 className="font-cond text-2xl font-bold">{day.exercises.length} lifts</h2>
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-cond text-2xl font-bold">{lifts.length} lifts</h2>
+            <Link href="/settings#days" className="text-sm font-semibold text-steel underline">Edit</Link>
+          </div>
           <ul className="mt-2 divide-y divide-line border-y border-line">
-            {day.exercises.map((name) => {
+            {lifts.map((name) => {
               const ex = EXERCISES[name];
               return (
                 <li key={name} className="flex justify-between gap-3 py-3">

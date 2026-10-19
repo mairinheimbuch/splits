@@ -5,7 +5,10 @@ export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
-export type Settings = { user_id: string; split: string; lift_goal: number; cardio_goal: number; unit: string };
+export type Settings = {
+  user_id: string; split: string; lift_goal: number; cardio_goal: number; unit: string;
+  custom_days?: Record<string, string[]> | null; // your own exercise list for any day
+};
 
 // Your settings, created with good defaults the first time
 export async function getSettings(userId: string): Promise<Settings> {

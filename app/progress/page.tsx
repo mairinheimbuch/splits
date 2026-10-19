@@ -8,9 +8,9 @@ import { e1rm, fmt, shortDate, weekStart, type SetRow } from "@/lib/stats";
 import Login from "@/components/Login";
 import Plate from "@/components/Plate";
 import MuscleMap from "@/components/MuscleMap";
-import { weekStreak, weekGains } from "@/lib/insights";
+import { weekStreak, weekGains, plateaus, readiness } from "@/lib/insights";
 
-type Workout = { id: string; day_name: string; started_at: string; finished_at: string | null };
+type Workout = { id: string; day_name: string; started_at: string; finished_at: string | null; sleep_hours: number | null; energy: number | null };
 type Point = { date: string; best: number; weight: number; reps: number };
 
 export default function Progress() {
@@ -105,6 +105,28 @@ export default function Progress() {
     return { thisWeek, lastWeek, weekSets, streak: weekStreak(workouts, settings.lift_goal), gains: weekGains(sets).slice(0, 3) };
   }, [workouts, sets, settings]);
 
+  const { stuck, checked: liftsChecked } = useMemo(() => plateaus(sets), [sets]);
+  const findings = useMemo(() => readiness(workouts, sets), [workouts, sets]);
+  const checkins = workouts.filter((w) => w.sleep_hours != null || w.energy != null).length;
+
+  // Download every set you've logged as a spreadsheet (CSV), ready for Excel, Tableau or Python
+  function exportCsv() {
+    const byId = Object.fromEntries(workouts.map((w) => [w.id, w]));
+    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = [["date", "day", "exercise", "muscle", "set", "weight", "reps", "est_1rm", "sleep_hours", "energy"]];
+    for (const s of sets) {
+      const w = byId[s.workout_id];
+      rows.push([s.created_at, w?.day_name ?? "", s.exercise, EXERCISES[s.exercise]?.muscle ?? "", String(s.set_no),
+        String(s.weight), String(s.reps), String(e1rm(Number(s.weight), s.reps)), String(w?.sleep_hours ?? ""), String(w?.energy ?? "")]);
+    }
+    const blob = new Blob([rows.map((r) => r.map(esc).join(",")).join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `splits-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   if (loading) return null;
   if (!user) return <Login />;
   if (!ready || !settings) return <p className="p-6 text-steel">Loading your progress...</p>;
@@ -170,6 +192,29 @@ export default function Progress() {
           )}
         </section>
       )}
+
+      {/* Lifts that have stopped going up */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-cond text-3xl font-bold">Stuck lifts</h2>
+          <p className="text-steel">A lift is stuck when your last 3 weeks didn&apos;t beat your best from before that.</p>
+        </div>
+        {liftsChecked === 0 ? (
+          <p className="rounded-2xl bg-white border border-line p-4 text-steel">
+            Needs about 4 sessions of a lift over 3+ weeks before it can tell. Keep logging and this fills in.
+          </p>
+        ) : stuck.length === 0 ? (
+          <p className="rounded-2xl bg-white border border-line p-4">
+            Nothing stuck. All {liftsChecked} lifts with enough history are still going up.
+          </p>
+        ) : stuck.map((p) => (
+          <div key={p.name} className="rounded-2xl bg-white border-2 border-[#F2B705] p-4 flex flex-col gap-1">
+            <p className="font-cond text-2xl font-bold">{p.name}</p>
+            <p>Your best estimated max is <strong className="tabular">{p.best} {settings.unit}</strong>, set {shortDate(p.since)}. {p.sessions} sessions since haven&apos;t beaten it.</p>
+            <p className="text-steel">Try this: drop the weight about 10% for one week, then build back up. Or switch rep ranges for 3 weeks (heavier for 4–6 reps, or lighter for 12–15).</p>
+          </div>
+        ))}
+      </section>
 
       {/* Strength over time */}
       {lift && (
@@ -279,6 +324,30 @@ export default function Progress() {
         </div>
       </section>
 
+      {/* Sleep and energy, from your check-ins */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-cond text-3xl font-bold">What helps you lift</h2>
+          <p className="text-steel">From your check-ins. Strength is your top sets compared with your usual for each lift.</p>
+        </div>
+        {findings.map((f) => f && (
+          <div key={f.label} className="rounded-2xl bg-white border border-line p-4 flex flex-col gap-1">
+            <p className="font-cond text-2xl font-bold">{f.label}</p>
+            {Number.isNaN(f.diff) ? (
+              <p className="text-steel">
+                Need at least 3 workouts on each side to compare. So far: {f.nHigh} with {f.high}, {f.nLow} with {f.low}.
+              </p>
+            ) : (
+              <p className="text-lg">
+                You lift <strong className="tabular">{Math.abs(f.diff).toFixed(1)}% {f.diff >= 0 ? "stronger" : "weaker"}</strong> with {f.high} than with {f.low}.
+                <span className="block text-sm text-steel">Based on {f.nHigh + f.nLow} workouts. It&apos;s a pattern in your own data, not proof of cause.</span>
+              </p>
+            )}
+          </div>
+        ))}
+        <p className="text-sm text-steel">{checkins} workout{checkins === 1 ? "" : "s"} with a check-in so far.</p>
+      </section>
+
       {/* Personal bests */}
       <section className="flex flex-col gap-2">
         <h2 className="font-cond text-3xl font-bold">Personal bests</h2>
@@ -293,7 +362,7 @@ export default function Progress() {
       </section>
 
       {/* Recent sessions */}
-      <section className="flex flex-col gap-2 pb-6">
+      <section className="flex flex-col gap-2">
         <h2 className="font-cond text-3xl font-bold">Recent workouts</h2>
         <ul className="flex flex-col gap-2">
           {recent.map((w) => {
@@ -312,6 +381,15 @@ export default function Progress() {
             );
           })}
         </ul>
+      </section>
+
+      {/* Your data */}
+      <section className="flex flex-col gap-2 pb-6">
+        <h2 className="font-cond text-3xl font-bold">Your data</h2>
+        <p className="text-steel">Every set you&apos;ve logged, with dates, sleep and energy. Opens in Excel, Google Sheets, Tableau or Python.</p>
+        <button type="button" onClick={exportCsv} className="self-start rounded-xl border-2 border-ink px-4 py-3 font-bold">
+          Download as CSV ({sets.length} sets)
+        </button>
       </section>
     </main>
   );
