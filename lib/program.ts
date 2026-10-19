@@ -6,8 +6,13 @@ export type Muscle =
 
 export const MUSCLES: Muscle[] = ["Chest", "Back", "Shoulders", "Biceps", "Triceps", "Quads", "Hamstrings", "Glutes", "Calves", "Core", "Forearms"];
 
+export type Gear = "barbell" | "dumbbell" | "machine" | "cable" | "bodyweight";
+export type Joint = "knee" | "back" | "shoulder";
+
 export type Exercise = {
   name: string;
+  gear: Gear;           // what you need to do it
+  stress: Joint[];      // joints it loads hard (used to steer around sore spots)
   muscle: Muscle;       // the main muscle (counts as a full set)
   also: Muscle[];       // helpers (count as half a set)
   sets: number;         // how many working sets
@@ -17,7 +22,7 @@ export type Exercise = {
 };
 
 function ex(name: string, muscle: Muscle, sets: number, lo: number, hi: number, step: number, rest: number, also: Muscle[] = []): Exercise {
-  return { name, muscle, also, sets, reps: [lo, hi], step, rest };
+  return { name, muscle, also, sets, reps: [lo, hi], step, rest, gear: "machine", stress: [] };
 }
 
 const LIST: Exercise[] = [
@@ -69,7 +74,47 @@ const LIST: Exercise[] = [
   ex("Wrist Curl", "Forearms", 3, 12, 20, 2.5, 45),
   ex("Reverse Curl", "Forearms", 3, 10, 15, 5, 60, ["Biceps"]),
   ex("Farmer's Carry (seconds)", "Forearms", 3, 30, 60, 10, 90, ["Core"]),
+  // Dumbbell and at-home options (used by the plan builder)
+  ex("Dumbbell Fly", "Chest", 3, 10, 15, 5, 60),
+  ex("Dumbbell Curl", "Biceps", 3, 8, 12, 5, 60),
+  ex("Dumbbell Romanian Deadlift", "Hamstrings", 3, 8, 12, 5, 90, ["Glutes"]),
+  ex("Step-Up", "Quads", 3, 8, 12, 5, 90, ["Glutes"]),
+  ex("Glute Bridge", "Glutes", 3, 12, 20, 0, 60, ["Hamstrings"]),
+  ex("Single-Leg Calf Raise", "Calves", 3, 10, 20, 0, 45),
+  ex("Pike Push-Up", "Shoulders", 3, 6, 12, 0, 90, ["Triceps"]),
+  ex("Inverted Row", "Back", 3, 8, 15, 0, 90, ["Biceps"]),
+  ex("Wall Sit (seconds)", "Quads", 3, 30, 60, 0, 60),
+  ex("Diamond Push-Up", "Triceps", 3, 8, 15, 0, 60, ["Chest"]),
+  ex("Superman Hold (seconds)", "Back", 3, 20, 40, 0, 45, ["Glutes"]),
+  ex("Bird Dog", "Core", 3, 8, 12, 0, 45),
+  ex("Sliding Leg Curl", "Hamstrings", 3, 8, 12, 0, 60, ["Glutes"]),
 ];
+
+// What each lift needs, and which joints it loads hard
+const GEAR: Record<string, Gear> = {
+  "Bench Press": "barbell", "Overhead Press": "barbell", "Incline Dumbbell Press": "dumbbell", "Lateral Raise": "dumbbell",
+  "Triceps Pushdown": "cable", "Overhead Triceps Extension": "dumbbell", "Barbell Row": "barbell", "Lat Pulldown": "machine",
+  "Seated Cable Row": "cable", "Face Pull": "cable", "Barbell Curl": "barbell", "Hammer Curl": "dumbbell",
+  "Back Squat": "barbell", "Romanian Deadlift": "barbell", "Leg Press": "machine", "Lying Leg Curl": "machine",
+  "Hip Thrust": "barbell", "Standing Calf Raise": "machine", "Dumbbell Bench Press": "dumbbell", "Pull-Up": "bodyweight",
+  "Seated Dumbbell Shoulder Press": "dumbbell", "Chest-Supported Row": "dumbbell", "EZ-Bar Curl": "barbell", "Skull Crusher": "barbell",
+  "Deadlift": "barbell", "Bulgarian Split Squat": "dumbbell", "Leg Extension": "machine", "Seated Leg Curl": "machine",
+  "Hip Abduction": "machine", "Hanging Leg Raise": "bodyweight", "Cable Fly": "cable", "Push-Up": "bodyweight",
+  "Single-Arm Dumbbell Row": "dumbbell", "Rear Delt Fly": "dumbbell", "Dips": "bodyweight", "Goblet Squat": "dumbbell",
+  "Walking Lunge": "dumbbell", "Cable Crunch": "cable", "Plank (seconds)": "bodyweight", "Wrist Curl": "dumbbell",
+  "Reverse Curl": "barbell", "Farmer's Carry (seconds)": "dumbbell", "Dumbbell Fly": "dumbbell", "Dumbbell Curl": "dumbbell",
+  "Dumbbell Romanian Deadlift": "dumbbell", "Step-Up": "dumbbell", "Glute Bridge": "bodyweight", "Single-Leg Calf Raise": "bodyweight",
+  "Pike Push-Up": "bodyweight", "Inverted Row": "bodyweight", "Wall Sit (seconds)": "bodyweight", "Diamond Push-Up": "bodyweight",
+  "Superman Hold (seconds)": "bodyweight", "Bird Dog": "bodyweight", "Sliding Leg Curl": "bodyweight",
+};
+const STRESS: Record<string, Joint[]> = {
+  "Back Squat": ["knee", "back"], "Deadlift": ["back"], "Romanian Deadlift": ["back"], "Barbell Row": ["back"],
+  "Leg Press": ["knee"], "Bulgarian Split Squat": ["knee"], "Leg Extension": ["knee"], "Goblet Squat": ["knee"],
+  "Walking Lunge": ["knee"], "Step-Up": ["knee"], "Wall Sit (seconds)": ["knee"],
+  "Bench Press": ["shoulder"], "Overhead Press": ["shoulder"], "Dips": ["shoulder"], "Seated Dumbbell Shoulder Press": ["shoulder"],
+  "Pike Push-Up": ["shoulder"], "Skull Crusher": ["shoulder"],
+};
+for (const e of LIST) { e.gear = GEAR[e.name] ?? "machine"; e.stress = STRESS[e.name] ?? []; }
 
 export const EXERCISES: Record<string, Exercise> = Object.fromEntries(LIST.map((e) => [e.name, e]));
 export const ALL_EXERCISES = LIST.map((e) => e.name);

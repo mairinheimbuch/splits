@@ -107,6 +107,16 @@ export default function Today() {
       </section>
 
       <div className="px-6 flex flex-col gap-8 pt-6">
+        {!settings.plan_answers && (
+          <Link href="/plan" className="rounded-2xl bg-white border-2 border-ink p-4 flex items-center justify-between gap-3">
+            <span>
+              <span className="block font-cond text-2xl font-bold">Not sure this split fits you?</span>
+              <span className="block text-sm text-steel">Answer 7 quick questions and get a plan built around your week, gear and goals.</span>
+            </span>
+            <span className="text-2xl" aria-hidden="true">›</span>
+          </Link>
+        )}
+
         {/* What's in it */}
         <section className="flex flex-col">
           <div className="flex items-baseline justify-between">

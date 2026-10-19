@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase, getSettings, type Settings } from "@/lib/supabase";
 import { useUser } from "@/lib/useUser";
@@ -65,6 +66,14 @@ export default function MySplit() {
   return (
     <main className="px-5 pt-10 flex flex-col gap-8">
       <h1 className="font-cond text-5xl font-extrabold">My split</h1>
+
+      <Link href="/plan" className="rounded-2xl bg-ink text-white p-4 flex items-center justify-between gap-3">
+        <span>
+          <span className="block font-cond text-2xl font-bold">{s.plan_answers ? "Rebuild my plan" : "Build my plan"}</span>
+          <span className="block text-sm text-white/75">Answer a few questions, get a split and lifts picked for you, with reasons.</span>
+        </span>
+        <span className="text-2xl" aria-hidden="true">›</span>
+      </Link>
 
       <section className="flex flex-col gap-3" role="radiogroup" aria-label="Your split">
         {SPLITS.map((sp) => {
