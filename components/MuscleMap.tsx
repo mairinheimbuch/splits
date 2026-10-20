@@ -4,12 +4,12 @@ import { useState } from "react";
 import { fmt } from "@/lib/stats";
 
 // Front and back body. Each muscle fills in by how many sets it got this week.
-// One green, light to dark. 10–20 sets is the usual target for growth.
+// One green, light to dark. 10-20 sets is the usual target for growth.
 const LEVELS = [
   { min: 0, fill: "#D5D9DF", label: "0" },
-  { min: 0.5, fill: "#BFE3CC", label: "1–4" },
-  { min: 5, fill: "#7CC59A", label: "5–9" },
-  { min: 10, fill: "#2E8B57", label: "10–20" },
+  { min: 0.5, fill: "#BFE3CC", label: "1-4" },
+  { min: 5, fill: "#7CC59A", label: "5-9" },
+  { min: 10, fill: "#2E8B57", label: "10-20" },
   { min: 20.5, fill: "#1B5E3A", label: "20+" },
 ];
 const BODY = "#EEF0F2"; // skin areas that aren't a tracked muscle

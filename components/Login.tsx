@@ -9,6 +9,24 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
+
+  // A private demo account with 5 weeks of made-up training, so you can see everything first
+  async function tryDemo() {
+    setDemoBusy(true);
+    setMsg("");
+    try {
+      const res = await fetch("/api/demo", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Something went wrong");
+      const { error } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
+      if (error) throw error;
+      window.location.href = "/progress";
+    } catch (e) {
+      setDemoBusy(false);
+      setMsg("Couldn't open the demo: " + (e instanceof Error ? e.message : "unknown error"));
+    }
+  }
 
   async function go(mode: "in" | "up") {
     if (!email || !password) return setMsg("Enter your email and a password.");
@@ -47,6 +65,13 @@ export default function Login() {
           className="rounded-xl border-2 border-ink py-3 text-lg font-bold disabled:opacity-60">Create an account</button>
         {msg && <p className="text-sm font-semibold text-[#B3132B]">{msg}</p>}
       </form>
+      <div className="border-t border-line pt-6 flex flex-col gap-2">
+        <button type="button" onClick={tryDemo} disabled={demoBusy || busy}
+          className="rounded-xl bg-white border border-line py-3 text-lg font-bold disabled:opacity-60">
+          {demoBusy ? "Building your demo..." : "Try a demo, no account needed"}
+        </button>
+        <p className="text-sm text-steel text-center">Your own private copy with 5 weeks of made-up workouts. Play around, nobody else sees it.</p>
+      </div>
     </main>
   );
 }

@@ -9,6 +9,7 @@ export type Settings = {
   user_id: string; split: string; lift_goal: number; cardio_goal: number; unit: string;
   custom_days?: Record<string, string[]> | null; // your own exercise list for any day
   plan_answers?: import("@/lib/planner").Answers | null; // what you told the plan builder
+  bodyweight?: number | null; // optional, in lb. Only used for the protein range
 };
 
 // Your settings, created with good defaults the first time

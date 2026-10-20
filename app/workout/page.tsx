@@ -303,7 +303,7 @@ export default function Workout() {
               <div className="p-4 flex flex-col gap-1">
                 <div className="flex items-baseline justify-between gap-2">
                   <h2 className="font-cond text-2xl font-bold leading-tight">{name}</h2>
-                  <span className="text-steel tabular whitespace-nowrap">{ex.sets} × {ex.reps[0]}–{ex.reps[1]}</span>
+                  <span className="text-steel tabular whitespace-nowrap">{ex.sets} × {ex.reps[0]}-{ex.reps[1]}</span>
                 </div>
                 {p?.sets.length ? (
                   <p className="text-sm text-steel tabular">

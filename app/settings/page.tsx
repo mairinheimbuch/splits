@@ -14,8 +14,22 @@ export default function MySplit() {
   const [status, setStatus] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState("");
+  const [bw, setBw] = useState("");
+  const [ordering, setOrdering] = useState<string[] | null>(null); // lifts tapped so far, in order
+  const [dayNote, setDayNote] = useState("");
 
-  useEffect(() => { if (user) getSettings(user.id).then(setS); }, [user]);
+  useEffect(() => {
+    if (user) getSettings(user.id).then((st) => { setS(st); setBw(st.bodyweight ? String(st.bodyweight) : ""); });
+  }, [user]);
+
+  async function saveBodyweight(clear = false) {
+    if (!s) return;
+    const n = clear ? null : Number(bw) || null;
+    if (clear) setBw("");
+    setS({ ...s, bodyweight: n });
+    const { error } = await supabase.from("settings").update({ bodyweight: n }).eq("user_id", s.user_id);
+    setStatus(error ? "Couldn't save: " + error.message : clear ? "Bodyweight removed" : "Bodyweight saved");
+  }
 
   // Save your own exercise list for one day (or reset it to the default)
   async function saveDay(dayName: string, list: string[] | null) {
@@ -24,15 +38,15 @@ export default function MySplit() {
     if (list) custom[dayName] = list; else delete custom[dayName];
     setS({ ...s, custom_days: custom });
     const { error } = await supabase.from("settings").update({ custom_days: custom }).eq("user_id", s.user_id);
-    setStatus(error ? "Couldn't save: " + error.message : `${dayName} saved`);
+    setDayNote(error ? "Couldn't save: " + error.message : "Saved ✓");
   }
 
-  function move(list: string[], i: number, dir: -1 | 1) {
-    const j = i + dir;
-    if (j < 0 || j >= list.length) return list;
-    const next = [...list];
-    [next[i], next[j]] = [next[j], next[i]];
-    return next;
+  // Change order: tap lifts in the order you'll do them. Tap one again to take it back.
+  function tapOrder(name: string, list: string[], dayName: string) {
+    const cur = ordering ?? [];
+    const next = cur.includes(name) ? cur.filter((x) => x !== name) : [...cur, name];
+    if (next.length === list.length) { saveDay(dayName, next); setOrdering(null); return; }
+    setOrdering(next);
   }
 
   async function save(next: Settings) {
@@ -112,7 +126,7 @@ export default function MySplit() {
           const edited = !!s.custom_days?.[dayName]?.length;
           return (
             <div key={dayName} className="rounded-2xl bg-white border border-line overflow-hidden">
-              <button type="button" onClick={() => { setEditing(open ? null : dayName); setAdding(""); }} aria-expanded={open}
+              <button type="button" onClick={() => { setEditing(open ? null : dayName); setAdding(""); setOrdering(null); setDayNote(""); }} aria-expanded={open}
                 className="w-full flex items-center gap-3 p-3 text-left">
                 <Plate color={d.color} ink={d.ink} size={32} />
                 <span className="flex-1">
@@ -123,19 +137,49 @@ export default function MySplit() {
               </button>
               {open && (
                 <div className="px-3 pb-3 flex flex-col gap-2">
-                  <ul className="flex flex-col divide-y divide-line border-y border-line">
-                    {list.map((name, i) => (
-                      <li key={name} className="flex items-center gap-1 py-2">
-                        <span className="flex-1 font-semibold">{name}<span className="block text-xs font-normal text-steel">{EXERCISES[name].muscle}</span></span>
-                        <button type="button" aria-label={`Move ${name} up`} disabled={i === 0}
-                          onClick={() => saveDay(dayName, move(list, i, -1))} className="w-9 h-9 rounded-lg border border-line disabled:opacity-30">↑</button>
-                        <button type="button" aria-label={`Move ${name} down`} disabled={i === list.length - 1}
-                          onClick={() => saveDay(dayName, move(list, i, 1))} className="w-9 h-9 rounded-lg border border-line disabled:opacity-30">↓</button>
-                        <button type="button" aria-label={`Remove ${name}`} disabled={list.length === 1}
-                          onClick={() => saveDay(dayName, list.filter((x) => x !== name))} className="w-9 h-9 rounded-lg border border-line disabled:opacity-30">✕</button>
-                      </li>
-                    ))}
-                  </ul>
+                  {ordering ? (
+                    <>
+                      <p className="text-sm font-semibold">Tap your lifts in the order you&apos;ll do them. It saves when you&apos;ve tapped them all.</p>
+                      <ul className="flex flex-col gap-2">
+                        {list.map((name) => {
+                          const n = ordering.indexOf(name);
+                          return (
+                            <li key={name}>
+                              <button type="button" onClick={() => tapOrder(name, list, dayName)} aria-pressed={n >= 0}
+                                className={"w-full flex items-center gap-3 rounded-xl border-2 p-3 text-left font-semibold " + (n >= 0 ? "border-ink bg-panel" : "border-line bg-white")}>
+                                <span className={"w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold " + (n >= 0 ? "bg-ink text-white" : "border-2 border-dashed border-line")}>
+                                  {n >= 0 ? n + 1 : ""}
+                                </span>
+                                {name}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => setOrdering([])} className="rounded-xl border border-line px-4 py-2 font-semibold">Start over</button>
+                        <button type="button" onClick={() => setOrdering(null)} className="rounded-xl border border-line px-4 py-2 font-semibold">Cancel</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <ol className="flex flex-col divide-y divide-line border-y border-line">
+                        {list.map((name, i) => (
+                          <li key={name} className="flex items-center gap-3 py-2">
+                            <span className="w-6 text-center font-cond text-xl font-bold text-steel tabular">{i + 1}</span>
+                            <span className="flex-1 font-semibold">{name}<span className="block text-xs font-normal text-steel">{EXERCISES[name].muscle}</span></span>
+                            <button type="button" disabled={list.length === 1}
+                              onClick={() => saveDay(dayName, list.filter((x) => x !== name))}
+                              className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold disabled:opacity-30">Remove</button>
+                          </li>
+                        ))}
+                      </ol>
+                      {list.length > 1 && (
+                        <button type="button" onClick={() => { setOrdering([]); setDayNote(""); }}
+                          className="self-start rounded-xl border-2 border-ink px-4 py-2 font-bold">Change order</button>
+                      )}
+                    </>
+                  )}
                   <div className="flex gap-2">
                     <label className="sr-only" htmlFor={`add-${dayName}`}>Add a lift to {dayName}</label>
                     <select id={`add-${dayName}`} value={adding} onChange={(e) => setAdding(e.target.value)}
@@ -148,6 +192,7 @@ export default function MySplit() {
                     <button type="button" disabled={!adding} onClick={() => { saveDay(dayName, [...list, adding]); setAdding(""); }}
                       className="rounded-xl bg-ink text-white px-4 font-bold disabled:opacity-40">Add</button>
                   </div>
+                  {dayNote && <p className="text-sm font-semibold text-good" aria-live="polite">{dayNote}</p>}
                   {edited && (
                     <button type="button" onClick={() => saveDay(dayName, null)} className="self-start text-sm font-semibold text-steel underline">
                       Reset {dayName} to the default
@@ -158,6 +203,42 @@ export default function MySplit() {
             </div>
           );
         })}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-cond text-3xl font-bold">Protein <span className="font-sans text-base font-normal text-steel">(optional)</span></h2>
+          <p className="text-steel">Add your bodyweight to see a daily protein range for building muscle. It stays private and is only used for this.</p>
+        </div>
+        <div className="flex gap-2">
+          <label className="sr-only" htmlFor="bw">Bodyweight in pounds</label>
+          <input id="bw" type="number" inputMode="decimal" placeholder="Bodyweight" value={bw} onChange={(e) => setBw(e.target.value)}
+            className="w-40 rounded-xl border border-line bg-white px-3 py-2 text-lg tabular" />
+          <span className="self-center text-steel">lb</span>
+          <button type="button" onClick={() => saveBodyweight()} disabled={!Number(bw)}
+            className="rounded-xl bg-ink text-white px-4 font-bold disabled:opacity-40">Save</button>
+          {s.bodyweight ? (
+            <button type="button" onClick={() => saveBodyweight(true)} className="rounded-xl border border-line px-3 font-semibold">Remove</button>
+          ) : null}
+        </div>
+        {s.bodyweight ? (
+          <div className="rounded-2xl bg-white border border-line p-4 flex flex-col gap-2">
+            <p className="text-lg">
+              About <strong className="font-cond text-3xl tabular">{Math.round(s.bodyweight * 0.73)}-{Math.round(s.bodyweight)} g</strong> of protein a day
+            </p>
+            <details>
+              <summary className="cursor-pointer font-semibold underline">Why this range?</summary>
+              <p className="mt-2 text-sm">
+                Studies on lifting commonly land around 1.6 g of protein per kg of bodyweight a day (about 0.7 g per lb), with some benefit up to about 2.2 g per kg (1 g per lb).
+                Going past the top of the range doesn&apos;t seem to add more muscle. Spreading it over 3-4 meals is easier than one big one.
+              </p>
+              <p className="mt-2 text-sm">
+                This is a general range from research, not medical or diet advice. If you have kidney problems or another health condition, check with a doctor first.
+                Splits doesn&apos;t track food or calories on purpose.
+              </p>
+            </details>
+          </div>
+        ) : null}
       </section>
 
       <section className="flex flex-col divide-y divide-line border-y border-line">

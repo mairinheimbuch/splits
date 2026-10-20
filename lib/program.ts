@@ -16,7 +16,7 @@ export type Exercise = {
   muscle: Muscle;       // the main muscle (counts as a full set)
   also: Muscle[];       // helpers (count as half a set)
   sets: number;         // how many working sets
-  reps: [number, number]; // rep range, e.g. 8–12
+  reps: [number, number]; // rep range, e.g. 8-12
   step: number;         // how much weight to add when you beat the range (0 = bodyweight)
   rest: number;         // rest timer in seconds
 };
@@ -150,7 +150,7 @@ export const SPLITS: Split[] = [
   { id: "ppl6", name: "Push / Pull / Legs, twice", blurb: "6 days. The classic high-volume split.", days: ["Push", "Pull", "Legs", "Push", "Pull", "Legs"] },
   { id: "bro5", name: "Body-part split", blurb: "5 days. One muscle group a day.", days: ["Chest", "Back", "Legs", "Shoulders", "Arms"] },
   { id: "ul4", name: "Upper / Lower", blurb: "4 days. Simple and balanced.", days: ["Upper", "Lower", "Upper", "Lower"] },
-  { id: "full", name: "Full body", blurb: "2–3 days. Two workouts you alternate.", days: ["Full Body A", "Full Body B"] },
+  { id: "full", name: "Full body", blurb: "2-3 days. Two workouts you alternate.", days: ["Full Body A", "Full Body B"] },
 ];
 
 export function getSplit(id: string | null | undefined) {

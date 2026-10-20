@@ -211,7 +211,7 @@ export default function Progress() {
           <div key={p.name} className="rounded-2xl bg-white border-2 border-[#F2B705] p-4 flex flex-col gap-1">
             <p className="font-cond text-2xl font-bold">{p.name}</p>
             <p>Your best estimated max is <strong className="tabular">{p.best} {settings.unit}</strong>, set {shortDate(p.since)}. {p.sessions} sessions since haven&apos;t beaten it.</p>
-            <p className="text-steel">Try this: drop the weight about 10% for one week, then build back up. Or switch rep ranges for 3 weeks (heavier for 4–6 reps, or lighter for 12–15).</p>
+            <p className="text-steel">Try this: drop the weight about 10% for one week, then build back up. Or switch rep ranges for 3 weeks (heavier for 4-6 reps, or lighter for 12-15).</p>
           </div>
         ))}
       </section>
@@ -283,7 +283,7 @@ export default function Progress() {
       <section className="flex flex-col gap-3">
         <div>
           <h2 className="font-cond text-3xl font-bold">Sets per muscle this week</h2>
-          <p className="text-steel">The darker the muscle, the more it&apos;s worked. 10–20 hard sets a week is a common target for building muscle. Helper muscles count as half a set.</p>
+          <p className="text-steel">The darker the muscle, the more it&apos;s worked. 10-20 hard sets a week is a common target for building muscle. Helper muscles count as half a set.</p>
         </div>
         <MuscleMap sets={muscleSets} />
         <div className="flex flex-col gap-2">
@@ -328,7 +328,7 @@ export default function Progress() {
       <section className="flex flex-col gap-3">
         <div>
           <h2 className="font-cond text-3xl font-bold">What helps you lift</h2>
-          <p className="text-steel">From your check-ins. Strength is your top sets compared with your usual for each lift.</p>
+          <p className="text-steel">From your check-ins. Each workout is scored against your own progress trend for each lift, so getting stronger over time doesn&apos;t skew it.</p>
         </div>
         {findings.map((f) => f && (
           <div key={f.label} className="rounded-2xl bg-white border border-line p-4 flex flex-col gap-1">

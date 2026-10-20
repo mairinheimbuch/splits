@@ -16,14 +16,14 @@ export function fmt(n: number) {
 // fill the rep range on every set, then add weight. Every tip explains itself in `why`.
 export function suggest(ex: Exercise, last: { weight: number; reps: number }[]) {
   const [lo, hi] = ex.reps;
-  const range = `${lo}–${hi}`;
+  const range = `${lo}-${hi}`;
   if (!last.length) {
     return {
       weight: 0, reps: hi,
       note: ex.step
-        ? `First time. Pick a weight you could do for ${hi} reps with 1–2 left in the tank.`
+        ? `First time. Pick a weight you could do for ${hi} reps with 1-2 left in the tank.`
         : `First time. Do as many clean reps as you can, up to ${hi}.`,
-      why: `Starting a little light on purpose gives you a clean baseline. "1–2 left in the tank" means you stop when you could still do 1 or 2 more good reps. That's hard enough to build muscle, without grinding out ugly reps.`,
+      why: `Starting a little light on purpose gives you a clean baseline. "1-2 left in the tank" means you stop when you could still do 1 or 2 more good reps. That's hard enough to build muscle, without grinding out ugly reps.`,
     };
   }
   const w = last[0].weight;
@@ -44,7 +44,7 @@ export function suggest(ex: Exercise, last: { weight: number; reps: number }[]) 
   if (minReps < lo) return {
     weight: w, reps: lo,
     note: `Stay at ${fmt(w)} and get every set to ${lo} reps.`,
-    why: `At least one set (${done}) fell under ${lo}, the bottom of your ${range} range. Adding weight now would make that worse. Stay here until every set reaches ${lo}. If it doesn't happen in 2–3 sessions, drop the weight about 10%.`,
+    why: `At least one set (${done}) fell under ${lo}, the bottom of your ${range} range. Adding weight now would make that worse. Stay here until every set reaches ${lo}. If it doesn't happen in 2-3 sessions, drop the weight about 10%.`,
   };
   return {
     weight: w, reps: Math.min(hi, minReps + 1),

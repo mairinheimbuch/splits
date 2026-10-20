@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 const TABS = [
   { href: "/", label: "Today", icon: "M4 10h3v4H4zM17 10h3v4h-3zM7 11h10v2H7zM2 11h2v2H2zM20 11h2v2h-2z" },
@@ -11,6 +12,12 @@ const TABS = [
 
 export default function TabBar() {
   const path = usePathname();
+  // iPhones only show the pressed look on buttons when the page listens for touches
+  useEffect(() => {
+    const noop = () => {};
+    document.addEventListener("touchstart", noop, { passive: true });
+    return () => document.removeEventListener("touchstart", noop);
+  }, []);
   if (path.startsWith("/workout")) return null; // the workout screen has its own bottom bar
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 bg-panel/95 backdrop-blur border-t border-line pb-[env(safe-area-inset-bottom)]">

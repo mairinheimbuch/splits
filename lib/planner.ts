@@ -4,7 +4,7 @@ import { EXERCISES, DAYS, SPLITS, getSplit, type Muscle, type Gear, type Joint }
 export type Answers = {
   days: number;                                   // lifting days a week you can really do
   goal: "muscle" | "strength" | "fitness";
-  experience: "new" | "some" | "lots";            // under 6 months / 6 months–2 years / 2+ years
+  experience: "new" | "some" | "lots";            // under 6 months / 6 months-2 years / 2+ years
   equipment: "gym" | "dumbbells" | "home";
   minutes: 45 | 60 | 75;
   focus: Muscle[];                                // muscles you want more of
@@ -54,7 +54,7 @@ function pickSplit(a: Answers) {
     reasons.push("With 6 days, Push / Pull / Legs twice through hits every muscle twice a week with lots of total volume.");
   }
   if (a.experience === "new" && a.days >= 5) {
-    reasons.push("You're newer to lifting, so 5–6 days is a lot to recover from. It's fine if you can, but 3–4 days builds almost as much while you learn the lifts. Drop your days anytime and the plan adjusts.");
+    reasons.push("You're newer to lifting, so 5-6 days is a lot to recover from. It's fine if you can, but 3-4 days builds almost as much while you learn the lifts. Drop your days anytime and the plan adjusts.");
   }
   if (a.days >= 5) reasons.push("A body-part split (chest day, back day...) trains each muscle once a week, so it wasn't picked. It can work, but twice a week tends to do better for most people.");
   if (a.goal === "strength") reasons.push("For strength, keep the big lifts first in each day and use the low end of each rep range on them.");

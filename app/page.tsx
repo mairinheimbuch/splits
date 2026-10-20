@@ -129,7 +129,7 @@ export default function Today() {
               return (
                 <li key={name} className="flex justify-between gap-3 py-3">
                   <span className="font-semibold">{name}</span>
-                  <span className="text-steel tabular whitespace-nowrap">{ex.sets} × {ex.reps[0]}–{ex.reps[1]}</span>
+                  <span className="text-steel tabular whitespace-nowrap">{ex.sets} × {ex.reps[0]}-{ex.reps[1]}</span>
                 </li>
               );
             })}

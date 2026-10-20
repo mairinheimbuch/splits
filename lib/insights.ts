@@ -54,9 +54,10 @@ export function plateaus(sets: SetRow[]): { stuck: Plateau[]; checked: number } 
     const older = rows.filter((r) => new Date(r.created_at).getTime() < windowStart);
     const recentSessions = new Set(recent.map((r) => r.workout_id)).size;
     if (sessions < 4 || recentSessions < 2 || !older.length) continue;
-    checked++;
     const bestOld = older.reduce((a, b) => (e1rm(Number(b.weight), b.reps) > e1rm(Number(a.weight), a.reps) ? b : a));
     const oldMax = e1rm(Number(bestOld.weight), bestOld.reps);
+    if (!oldMax) continue; // bodyweight lifts with no added weight: progress is reps, not tracked here
+    checked++;
     const newMax = Math.max(...recent.map((r) => e1rm(Number(r.weight), r.reps)));
     if (newMax <= oldMax) out.push({ name, best: oldMax, since: bestOld.created_at, sessions: recentSessions });
   }
@@ -64,26 +65,41 @@ export function plateaus(sets: SetRow[]): { stuck: Plateau[]; checked: number } 
 }
 
 // ---------- Sleep and energy vs strength ----------
-// Each workout gets a strength score: how your top sets compared to your usual (1.00 = a normal day for you).
+// Each workout gets a strength score: how your top sets compared with what your trend line expected that day.
+// Using a trend line matters: you get stronger every week, so without it, later workouts would always look "better".
 export type CheckinWorkout = { id: string; sleep_hours: number | null; energy: number | null };
 
 function scores(workouts: CheckinWorkout[], sets: SetRow[]) {
-  const byLift: Record<string, number[]> = {};
-  const top: Record<string, Record<string, number>> = {}; // workout -> lift -> best
+  // Best estimated max per lift per workout, with the time it happened
+  const best: Record<string, Record<string, { v: number; t: number }>> = {}; // lift -> workout -> best
   for (const s of sets) {
     const v = e1rm(Number(s.weight), s.reps);
     if (!v) continue;
-    (top[s.workout_id] ??= {});
-    top[s.workout_id][s.exercise] = Math.max(top[s.workout_id][s.exercise] ?? 0, v);
+    const t = new Date(s.created_at).getTime();
+    (best[s.exercise] ??= {});
+    const cur = best[s.exercise][s.workout_id];
+    if (!cur || v > cur.v) best[s.exercise][s.workout_id] = { v, t };
   }
-  for (const w of Object.values(top)) for (const [lift, v] of Object.entries(w)) (byLift[lift] ??= []).push(v);
-  const avg: Record<string, number> = {};
-  for (const [lift, vs] of Object.entries(byLift)) avg[lift] = vs.reduce((a, b) => a + b, 0) / vs.length;
+  // For each lift, fit a straight line through its sessions, then score each session against the line
+  const ratios: Record<string, number[]> = {};
+  for (const byWorkout of Object.values(best)) {
+    const pts = Object.entries(byWorkout);
+    if (pts.length < 3) continue;
+    const n = pts.length;
+    const mt = pts.reduce((a, [, p]) => a + p.t, 0) / n;
+    const mv = pts.reduce((a, [, p]) => a + p.v, 0) / n;
+    const cov = pts.reduce((a, [, p]) => a + (p.t - mt) * (p.v - mv), 0);
+    const vt = pts.reduce((a, [, p]) => a + (p.t - mt) ** 2, 0);
+    const slope = vt ? cov / vt : 0;
+    for (const [wid, p] of pts) {
+      const expected = mv + slope * (p.t - mt);
+      if (expected > 0) (ratios[wid] ??= []).push(p.v / expected);
+    }
+  }
   const out: Record<string, number> = {};
   for (const w of workouts) {
-    const lifts = Object.entries(top[w.id] ?? {}).filter(([lift]) => byLift[lift].length >= 2);
-    if (!lifts.length) continue;
-    out[w.id] = lifts.reduce((n, [lift, v]) => n + v / avg[lift], 0) / lifts.length;
+    const r = ratios[w.id];
+    if (r?.length) out[w.id] = r.reduce((a, b) => a + b, 0) / r.length;
   }
   return out;
 }
@@ -106,6 +122,6 @@ export function readiness(workouts: CheckinWorkout[], sets: SetRow[]) {
   const sc = scores(workouts, sets);
   return [
     compare(workouts, sc, (w) => (w.sleep_hours == null ? null : w.sleep_hours >= 7), "Sleep", "7+ hours", "under 7 hours"),
-    compare(workouts, sc, (w) => (w.energy == null ? null : w.energy >= 4), "Energy", "high energy (4–5)", "lower energy (1–3)"),
+    compare(workouts, sc, (w) => (w.energy == null ? null : w.energy >= 4), "Energy", "high energy (4-5)", "lower energy (1-3)"),
   ];
 }

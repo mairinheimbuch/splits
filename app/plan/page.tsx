@@ -86,7 +86,7 @@ export default function PlanBuilder() {
                 {list.map((n) => (
                   <li key={n} className="flex justify-between gap-3 px-3 py-2">
                     <span className="font-semibold">{n}{a.focus.includes(EXERCISES[n].muscle) && <span className="ml-2 text-xs font-bold text-good">focus</span>}</span>
-                    <span className="text-steel tabular whitespace-nowrap">{EXERCISES[n].sets} × {EXERCISES[n].reps[0]}–{EXERCISES[n].reps[1]}</span>
+                    <span className="text-steel tabular whitespace-nowrap">{EXERCISES[n].sets} × {EXERCISES[n].reps[0]}-{EXERCISES[n].reps[1]}</span>
                   </li>
                 ))}
               </ul>
@@ -134,7 +134,7 @@ export default function PlanBuilder() {
 
       <section className="flex flex-col gap-2">
         <h2 className="font-cond text-2xl font-bold">How long have you been lifting?</h2>
-        {choice("experience", [["new", "Under 6 months"], ["some", "6 months – 2 years"], ["lots", "2+ years"]])}
+        {choice("experience", [["new", "Under 6 months"], ["some", "6 months - 2 years"], ["lots", "2+ years"]])}
       </section>
 
       <section className="flex flex-col gap-2">
