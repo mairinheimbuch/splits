@@ -21,6 +21,10 @@ export default function TabBar() {
     document.addEventListener("touchstart", noop, { passive: true });
     return () => document.removeEventListener("touchstart", noop);
   }, []);
+  // Every new tab or page starts at the top, instead of keeping the last page's scroll
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [path]);
   if (path.startsWith("/workout")) return null; // the workout screen has its own bottom bar
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 bg-panel/95 backdrop-blur border-t border-line pb-[env(safe-area-inset-bottom)]">
