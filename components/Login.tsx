@@ -21,7 +21,7 @@ export default function Login() {
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
       const { error } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
       if (error) throw error;
-      window.location.href = "/analytics";
+      window.location.href = "/settings"; // always start on Plan, the first tab
     } catch (e) {
       setDemoBusy(false);
       setMsg("Couldn't open the demo: " + (e instanceof Error ? e.message : "unknown error"));
@@ -32,11 +32,13 @@ export default function Login() {
     if (!email || !password) return setMsg("Enter your email and a password.");
     setBusy(true);
     setMsg("");
-    const { error } = mode === "in"
+    const { data, error } = mode === "in"
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password });
     setBusy(false);
-    if (error) setMsg(error.message);
+    if (error) return setMsg(error.message);
+    if (data.session) window.location.href = "/settings"; // always start on Plan, the first tab
+    else setMsg("Check your email to confirm your account, then sign in.");
   }
 
   const input = "w-full rounded-xl border border-line bg-white px-4 py-3 text-lg";
