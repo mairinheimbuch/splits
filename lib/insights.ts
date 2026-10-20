@@ -125,3 +125,8 @@ export function readiness(workouts: CheckinWorkout[], sets: SetRow[]) {
     compare(workouts, sc, (w) => (w.energy == null ? null : w.energy >= 4), "Energy", "high energy (4-5)", "lower energy (1-3)"),
   ];
 }
+
+// Each workout's strength score vs your own trend (1.00 = right on trend, 1.03 = 3% above)
+export function workoutScores(workouts: CheckinWorkout[], sets: SetRow[]) {
+  return scores(workouts, sets);
+}

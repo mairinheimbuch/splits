@@ -21,7 +21,7 @@ export default function Login() {
       if (!res.ok) throw new Error(data.error ?? "Something went wrong");
       const { error } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
       if (error) throw error;
-      window.location.href = "/progress";
+      window.location.href = "/analytics";
     } catch (e) {
       setDemoBusy(false);
       setMsg("Couldn't open the demo: " + (e instanceof Error ? e.message : "unknown error"));

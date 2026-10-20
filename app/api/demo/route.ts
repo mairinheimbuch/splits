@@ -45,7 +45,9 @@ export async function POST() {
   if (error || !made.user) return NextResponse.json({ error: error?.message ?? "Couldn't make the demo" }, { status: 500 });
   const uid = made.user.id;
 
-  await admin.from("settings").insert({ user_id: uid, split: "ppl_ul", lift_goal: 5, cardio_goal: 3, unit: "lb", bodyweight: 150 });
+  await admin.from("settings").insert({ user_id: uid, split: "ppl_ul", lift_goal: 5, cardio_goal: 3, unit: "lb", bodyweight: 150,
+    plan_answers: { days: 5, goal: "muscle", experience: "some", equipment: "gym", minutes: 60, focus: [], avoid: [] },
+  });
 
   // 5 weeks of Push / Pull / Legs / Upper / Lower, Monday to Friday, ending yesterday
   const rand = rng(42);
@@ -87,12 +89,17 @@ export async function POST() {
     await admin.from("sets").insert(rows);
   }
 
-  // A few walks and runs this week
-  const walks = [{ kind: "walk", minutes: 35, miles: 1.8 }, { kind: "run", minutes: 25, miles: 2.5 }];
-  for (const [i, c] of walks.entries()) {
-    const d = new Date(today); d.setDate(d.getDate() - i - 1);
-    await admin.from("cardio").insert({ user_id: uid, ...c, done_at: d.toISOString() });
+  // Walks and runs: 2-3 a week for 5 weeks, slowly getting longer
+  const cardioRows: { user_id: string; kind: string; minutes: number; miles: number; done_at: string }[] = [];
+  for (let back = 34; back >= 1; back--) {
+    const d = new Date(today); d.setDate(d.getDate() - back); d.setHours(8, 0, 0, 0);
+    const dow = d.getDay();
+    if (![0, 2, 4, 6].includes(dow) || rand() < 0.3) continue;
+    const run = dow === 6;
+    const minutes = Math.round((run ? 22 : 30) + (34 - back) * 0.3 + rand() * 8);
+    cardioRows.push({ user_id: uid, kind: run ? "run" : "walk", minutes, miles: Number((minutes / (run ? 10 : 19)).toFixed(1)), done_at: d.toISOString() });
   }
+  await admin.from("cardio").insert(cardioRows);
 
   return NextResponse.json({ email: made.user.email, password });
 }

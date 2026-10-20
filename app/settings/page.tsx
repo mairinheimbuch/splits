@@ -8,28 +8,18 @@ import { SPLITS, getDay, getSplit, dayList, ALL_EXERCISES, EXERCISES } from "@/l
 import Login from "@/components/Login";
 import Plate from "@/components/Plate";
 
-export default function MySplit() {
+export default function PlanTab() {
   const { user, loading } = useUser();
   const [s, setS] = useState<Settings | null>(null);
   const [status, setStatus] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState("");
-  const [bw, setBw] = useState("");
   const [ordering, setOrdering] = useState<string[] | null>(null); // lifts tapped so far, in order
   const [dayNote, setDayNote] = useState("");
 
   useEffect(() => {
-    if (user) getSettings(user.id).then((st) => { setS(st); setBw(st.bodyweight ? String(st.bodyweight) : ""); });
+    if (user) getSettings(user.id).then(setS);
   }, [user]);
-
-  async function saveBodyweight(clear = false) {
-    if (!s) return;
-    const n = clear ? null : Number(bw) || null;
-    if (clear) setBw("");
-    setS({ ...s, bodyweight: n });
-    const { error } = await supabase.from("settings").update({ bodyweight: n }).eq("user_id", s.user_id);
-    setStatus(error ? "Couldn't save: " + error.message : clear ? "Bodyweight removed" : "Bodyweight saved");
-  }
 
   // Save your own exercise list for one day (or reset it to the default)
   async function saveDay(dayName: string, list: string[] | null) {
@@ -78,18 +68,37 @@ export default function MySplit() {
   }
 
   return (
-    <main className="px-5 pt-10 flex flex-col gap-8">
-      <h1 className="font-cond text-5xl font-extrabold">My split</h1>
+    <main className="px-5 pt-6 flex flex-col gap-8">
+      <div>
+        <h1 className="font-cond text-5xl font-extrabold">Plan</h1>
+        <p className="text-steel">Set this up first. Today uses it to tell you what to lift.</p>
+      </div>
 
       <Link href="/plan" className="rounded-2xl bg-ink text-white p-4 flex items-center justify-between gap-3">
         <span>
-          <span className="block font-cond text-2xl font-bold">{s.plan_answers ? "Rebuild my plan" : "Build my plan"}</span>
+          <span className="block font-cond text-2xl font-bold">{s.plan_answers ? "Rebuild my plan" : "Step 1: Build my plan"}</span>
           <span className="block text-sm text-white/75">Answer a few questions, get a split and lifts picked for you, with reasons.</span>
         </span>
         <span className="text-2xl" aria-hidden="true">›</span>
       </Link>
 
-      <section className="flex flex-col gap-3" role="radiogroup" aria-label="Your split">
+      <section className="flex flex-col gap-2">
+        <h2 className="font-cond text-3xl font-bold">Your split</h2>
+        <div className="rounded-2xl bg-white border-2 border-ink p-4 flex flex-col gap-3">
+          <div>
+            <p className="font-cond text-2xl font-bold leading-tight">{getSplit(s.split).name}</p>
+            <p className="text-steel">{getSplit(s.split).blurb}</p>
+          </div>
+          <div className="flex gap-1.5">
+            {getSplit(s.split).days.map((d, i) => {
+              const dd = getDay(d);
+              return <Plate key={i} color={dd.color} ink={dd.ink} size={28} label={d} />;
+            })}
+          </div>
+        </div>
+        <details className="group">
+          <summary className="cursor-pointer font-semibold text-steel py-2">Pick a different split myself</summary>
+          <div className="flex flex-col gap-3" role="radiogroup" aria-label="Your split">
         {SPLITS.map((sp) => {
           const on = sp.id === s.split;
           return (
@@ -112,6 +121,9 @@ export default function MySplit() {
             </button>
           );
         })}
+          </div>
+
+        </details>
       </section>
 
       <section id="days" className="flex flex-col gap-3 scroll-mt-6">
@@ -205,50 +217,17 @@ export default function MySplit() {
         })}
       </section>
 
-      <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="font-cond text-3xl font-bold">Protein <span className="font-sans text-base font-normal text-steel">(optional)</span></h2>
-          <p className="text-steel">Add your bodyweight to see a daily protein range for building muscle. It stays private and is only used for this.</p>
-        </div>
-        <div className="flex gap-2">
-          <label className="sr-only" htmlFor="bw">Bodyweight in pounds</label>
-          <input id="bw" type="number" inputMode="decimal" placeholder="Bodyweight" value={bw} onChange={(e) => setBw(e.target.value)}
-            className="w-40 rounded-xl border border-line bg-white px-3 py-2 text-lg tabular" />
-          <span className="self-center text-steel">lb</span>
-          <button type="button" onClick={() => saveBodyweight()} disabled={!Number(bw)}
-            className="rounded-xl bg-ink text-white px-4 font-bold disabled:opacity-40">Save</button>
-          {s.bodyweight ? (
-            <button type="button" onClick={() => saveBodyweight(true)} className="rounded-xl border border-line px-3 font-semibold">Remove</button>
-          ) : null}
-        </div>
-        {s.bodyweight ? (
-          <div className="rounded-2xl bg-white border border-line p-4 flex flex-col gap-2">
-            <p className="text-lg">
-              About <strong className="font-cond text-3xl tabular">{Math.round(s.bodyweight * 0.73)}-{Math.round(s.bodyweight)} g</strong> of protein a day
-            </p>
-            <details>
-              <summary className="cursor-pointer font-semibold underline">Why this range?</summary>
-              <p className="mt-2 text-sm">
-                Studies on lifting commonly land around 1.6 g of protein per kg of bodyweight a day (about 0.7 g per lb), with some benefit up to about 2.2 g per kg (1 g per lb).
-                Going past the top of the range doesn&apos;t seem to add more muscle. Spreading it over 3-4 meals is easier than one big one.
-              </p>
-              <p className="mt-2 text-sm">
-                This is a general range from research, not medical or diet advice. If you have kidney problems or another health condition, check with a doctor first.
-                Splits doesn&apos;t track food or calories on purpose.
-              </p>
-            </details>
-          </div>
-        ) : null}
+      <section className="flex flex-col gap-1">
+        <h2 className="font-cond text-3xl font-bold">Weekly goals</h2>
+        <p className="text-steel">Your streak counts weeks where you hit the lifting goal.</p>
       </section>
-
-      <section className="flex flex-col divide-y divide-line border-y border-line">
+      <section className="-mt-6 flex flex-col divide-y divide-line border-y border-line">
         {stepper("Lifting days a week", "lift_goal", 1, 7)}
         {stepper("Walks or runs a week", "cardio_goal", 0, 7)}
       </section>
       {status && <p className="text-sm font-semibold" aria-live="polite">{status}</p>}
 
-      <button type="button" onClick={() => supabase.auth.signOut()}
-        className="self-start rounded-xl border border-line px-4 py-3 font-semibold">Sign out</button>
+      <Link href="/" className="mb-4 rounded-2xl bg-ink text-white text-center py-4 text-xl font-bold">Next: go to Today</Link>
     </main>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase, getSettings, type Settings } from "@/lib/supabase";
 import { useUser } from "@/lib/useUser";
 import { getSplit, getDay, nextDay, dayList, EXERCISES } from "@/lib/program";
@@ -27,6 +28,7 @@ export default function Today() {
   const [miles, setMiles] = useState("");
   const [saved, setSaved] = useState("");
   const [streak, setStreak] = useState(0);
+  const router = useRouter();
 
   async function load(uid: string) {
     const st = await getSettings(uid);
@@ -40,6 +42,8 @@ export default function Today() {
     const { data: l } = await supabase.from("workouts").select("*").not("finished_at", "is", null)
       .order("finished_at", { ascending: false }).limit(1);
     setLast((l?.[0] as Workout) ?? null);
+    // Brand-new account: set up a plan first
+    if (!st.plan_answers && !l?.length) { router.replace("/plan"); return; }
     const twelveHours = new Date(Date.now() - 12 * 3600 * 1000).toISOString();
     const { data: o } = await supabase.from("workouts").select("*").is("finished_at", null)
       .gte("started_at", twelveHours).order("started_at", { ascending: false }).limit(1);
@@ -107,16 +111,6 @@ export default function Today() {
       </section>
 
       <div className="px-6 flex flex-col gap-8 pt-6">
-        {!settings.plan_answers && (
-          <Link href="/plan" className="rounded-2xl bg-white border-2 border-ink p-4 flex items-center justify-between gap-3">
-            <span>
-              <span className="block font-cond text-2xl font-bold">Not sure this split fits you?</span>
-              <span className="block text-sm text-steel">Answer 7 quick questions and get a plan built around your week, gear and goals.</span>
-            </span>
-            <span className="text-2xl" aria-hidden="true">›</span>
-          </Link>
-        )}
-
         {/* What's in it */}
         <section className="flex flex-col">
           <div className="flex items-baseline justify-between">

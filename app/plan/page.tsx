@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase, getSettings, type Settings } from "@/lib/supabase";
 import { useUser } from "@/lib/useUser";
@@ -29,6 +28,14 @@ export default function PlanBuilder() {
       setHint(underworked(data ?? []));
     })();
   }, [user]);
+
+  // Skip the questions and keep the default split
+  async function skip() {
+    if (!s) return;
+    const { error } = await supabase.from("settings").update({ plan_answers: DEFAULTS }).eq("user_id", s.user_id);
+    if (error) return setStatus("Couldn't save: " + error.message);
+    window.location.href = "/";
+  }
 
   async function usePlan() {
     if (!s || !plan) return;
@@ -59,7 +66,7 @@ export default function PlanBuilder() {
 
   if (plan) {
     return (
-      <main className="px-5 pt-10 flex flex-col gap-6">
+      <main className="px-5 pt-6 flex flex-col gap-6">
         <button type="button" onClick={() => setPlan(null)} className="self-start font-semibold text-steel">Back to my answers</button>
         <div>
           <p className="text-steel">Your plan</p>
@@ -108,7 +115,7 @@ export default function PlanBuilder() {
         </p>
         <div className="flex flex-col gap-2 pb-6">
           <button type="button" onClick={usePlan} className="rounded-2xl bg-ink text-white py-4 text-xl font-bold">Use this plan</button>
-          <Link href="/settings" className="text-center py-2 font-semibold text-steel">Keep my current split</Link>
+          <button type="button" onClick={() => setPlan(null)} className="text-center py-2 font-semibold text-steel">Change my answers</button>
           {status && <p className="text-sm font-semibold text-[#B3132B]">{status}</p>}
         </div>
       </main>
@@ -116,8 +123,9 @@ export default function PlanBuilder() {
   }
 
   return (
-    <main className="px-5 pt-10 flex flex-col gap-7">
+    <main className="px-5 pt-6 flex flex-col gap-7">
       <div>
+        {!s.plan_answers && <p className="font-bold text-good">Welcome! Step 1 of 2</p>}
         <h1 className="font-cond text-5xl font-extrabold leading-none">Build my plan</h1>
         <p className="mt-2 text-steel">Answer a few questions and get a split and lifts that fit your week, your gear and your body. Every pick comes with the reason.</p>
       </div>
@@ -175,8 +183,14 @@ export default function PlanBuilder() {
         <p className="text-sm text-steel">This only swaps lifts that load those joints hard. If something hurts, see a doctor or physical therapist.</p>
       </section>
 
-      <button type="button" onClick={() => { setPlan(buildPlan(a)); window.scrollTo({ top: 0 }); }}
-        className="mb-6 rounded-2xl bg-ink text-white py-4 text-xl font-bold">Show my plan</button>
+      <div className="mb-6 flex flex-col gap-2">
+        <button type="button" onClick={() => { setPlan(buildPlan(a)); window.scrollTo({ top: 0 }); }}
+          className="rounded-2xl bg-ink text-white py-4 text-xl font-bold">Show my plan</button>
+        {!s.plan_answers && (
+          <button type="button" onClick={skip} className="py-2 font-semibold text-steel">Skip for now and use the standard 5-day split</button>
+        )}
+        {status && <p className="text-sm font-semibold text-[#B3132B]">{status}</p>}
+      </div>
     </main>
   );
 }
